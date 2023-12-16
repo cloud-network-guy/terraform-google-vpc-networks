@@ -85,7 +85,7 @@ variable "vpc_networks" {
       project_id             = optional(string)
       name                   = optional(string)
       description            = optional(string)
-      region                 = string
+      region                 = optional(string)
       bgp_asn                = optional(number)
       bgp_keepalive_interval = optional(number)
       advertised_groups      = optional(list(string))
