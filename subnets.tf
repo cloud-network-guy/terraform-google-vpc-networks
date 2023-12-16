@@ -18,7 +18,7 @@ locals {
         shared_accounts      = concat(coalesce(v.shared_accounts, []), coalesce(vpc_network.shared_accounts, []))
         secondary_ranges = [for i, r in coalesce(v.secondary_ranges, []) :
           {
-            name  = coalesce(r.name, "secondary-range-${i}")
+            name  = trimspace(coalesce(r.name, "secondary-range-${i}"))
             range = r.range
           }
         ]
@@ -31,6 +31,7 @@ locals {
       is_private           = v.purpose == "PRIVATE" ? true : false
       is_proxy_only        = contains(["INTERNAL_HTTPS_LOAD_BALANCER", "REGIONAL_MANAGED_PROXY"], v.purpose) ? true : false
       has_secondary_ranges = length(v.secondary_ranges) > 0 ? true : false
+
     }) if v.create == true
   ]
 }
@@ -43,6 +44,7 @@ resource "google_compute_subnetwork" "default" {
   network                  = each.value.network
   region                   = each.value.region
   stack_type               = each.value.is_private ? each.value.stack_type : null
+  ipv6_access_type         = each.value.is_proxy_only ? "INTERNAL" : null
   ip_cidr_range            = each.value.ip_range
   purpose                  = each.value.purpose
   role                     = each.value.is_proxy_only ? upper(coalesce(each.value.role, "active")) : null
