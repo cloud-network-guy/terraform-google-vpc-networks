@@ -44,7 +44,7 @@ resource "google_compute_subnetwork" "default" {
   network                  = each.value.network
   region                   = each.value.region
   stack_type               = each.value.is_private ? each.value.stack_type : null
-  ipv6_access_type         = each.value.is_proxy_only ? "INTERNAL" : null
+  ipv6_access_type         = null # each.value.is_proxy_only ? "INTERNAL" : null
   ip_cidr_range            = each.value.ip_range
   purpose                  = each.value.purpose
   role                     = each.value.is_proxy_only ? upper(coalesce(each.value.role, "active")) : null
