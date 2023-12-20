@@ -86,6 +86,7 @@ variable "vpc_networks" {
       name                   = optional(string)
       description            = optional(string)
       region                 = optional(string)
+      enable_bgp             = optional(bool)
       bgp_asn                = optional(number)
       bgp_keepalive_interval = optional(number)
       advertised_groups      = optional(list(string))
