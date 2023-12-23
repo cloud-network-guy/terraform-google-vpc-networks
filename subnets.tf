@@ -36,6 +36,11 @@ locals {
   ]
 }
 
+# Work-around for scenarios where a subnet is destroyed/re-created due to name change
+resource "null_resource" "subnets" {
+  for_each = { for i, v in local.subnets : v.index_key => true }
+}
+
 resource "google_compute_subnetwork" "default" {
   for_each                 = { for i, v in local.subnets : v.index_key => v }
   project                  = var.project_id
@@ -73,4 +78,5 @@ resource "google_compute_subnetwork" "default" {
       ip_cidr_range = v.range
     }
   ]
+  depends_on = [google_compute_network.default, null_resource.subnets]
 }

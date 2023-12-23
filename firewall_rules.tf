@@ -124,5 +124,6 @@ resource "google_compute_firewall" "default" {
   }
   target_tags             = each.value.target_tags
   target_service_accounts = each.value.target_service_accounts
+  depends_on              = [google_compute_network.default]
 }
 
