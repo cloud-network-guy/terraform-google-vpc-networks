@@ -17,7 +17,7 @@ locals {
   ])
   ip_ranges = [for i, v in local._ip_ranges :
     merge(v, {
-      index_key = "${v.project_id}/${v.network}/${v.name}"
+      index_key = "${v.project_id}/${v.name}"
     }) if v.create == true
   ]
 }

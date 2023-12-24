@@ -29,7 +29,7 @@ locals {
   ])
   __cloud_nats = [for i, v in local._cloud_nats :
     merge(v, {
-      index_key = "${v.project_id}/${v.region}/${v.name}"
+      index_key = "${v.project_id}/${v.region}/${v.router}/${v.name}"
     }) if v.create == true
   ]
   nat_addresses = { for i, v in local.__cloud_nats :
