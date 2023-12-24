@@ -55,5 +55,10 @@ resource "google_compute_router" "default" {
       }
     }
   }
+  timeouts {
+    create = null
+    delete = null
+    update = null
+  }
   depends_on = [google_compute_network.default]
 }
