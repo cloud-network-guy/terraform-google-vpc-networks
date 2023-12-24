@@ -56,7 +56,7 @@ locals {
   addresses = flatten([for k, addresses in local.cloud_nat_addresses :
     [for i, address in coalesce(addresses, []) :
       merge(address, {
-        index_key = "${k}/${i}"
+        index_key = "${v.project_id}/${v.region}/${v.name}"
       })
     ]
   ])
