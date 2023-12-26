@@ -1,158 +1,137 @@
-# Management of GCP VPC Network and related components:
+# Management of GCP VPC Networks and their components:
 
 - Subnets & IP Ranges
 - Cloud Routers
 - Cloud NATs
-- VPC Peering
+- Peering Connections
 - Static Routes
 - Firewall Rules
+- IP Ranges
 - Private Service Connects
+- Shared VPC Permissions
+- Serverless VPC Access Connectors
 
 ## Resources 
 
+- [google_compute_address]
+- [google_compute_firewall]
+- [google_compute_global_address]
 - [google_compute_network](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_network)
+- [google_compute_network_peering]
+- [google_compute_network_peering_routes_config]
+- [google_compute_route]
+- [google_compute_router]
+- [google_compute_router_nat]
+- [google_compute_subnetwork]
+- [google_compute_subnetwork_iam_binding]
+- [google_service_networking_connection]
+- [google_vpc_access_connector]
 
 ## Inputs 
 
-### VPC Network Inputs
+### Global Inputs
 
-| Name         | Description                        | Type     | Default |
-|--------------|------------------------------------|----------|--|
-| project\_id  | Project ID of the GCP project      | `string` | n/a |
-| network_name |       | `string` | n/a |
-| description |       | `string` | n/a |
-| mtu          |     | `number` | 1460 |
-| enable_global_routing |       | `bool`   | false |
-| auto_create_subnetworks |       | `bool`   | false |
-| service_project_ids |       | `list(string)`   | [] |
-| region | Default region for all resources | `string` | n/a |
+| Name                   | Description                      | Type           | Default |
+|------------------------|----------------------------------|----------------|---------|
+| project_id             | Default GCP Project ID           | `string`       | n/a     |
+| region                 | Default GCP Region               | `string`       | n/a     |
+| vpc_networks           | List of VPC Networks (see below) | `list(object)` | n/a     |
 
+### vpc_networks
 
-## Subnets
+`var.vpc_networks` is a list of objects.  Attributes are described below
 
-```
-subnets = {
-  default-us-east1 = {
-    region           = "us-east1"
-    ip_range         = "10.1.2.0/24"
-    enable_flow_logs = true
-  }
-  psc-us-east1 = {
-  }
-  proxy-only-us-east1 = {
-  }
-}
-```
+| Name                    | Description                                   | Type           | Default |
+|-------------------------|-----------------------------------------------|----------------|---------|
+| mtu                     | IP MTU Value                                  | `number`       | 0       |
+| enable_global_routing   | Use Global Routing rather than Regional       | `bool`         | false   |
+| auto_create_subnetworks | Automatically create subnets for each region  | `bool`         | false   |
+| service_project_ids     | Shared VPC Service Projects list              | `list(string)` | []      |
+| shared_accounts         | Specific accounts to share all subnets to     | `list(string)` | []      |
+| subnets                 | List of Subnetworks (see below)               | `list(object)` | []      |
+| routes                  | List of Routes (see below)                    | `list(object)` | []      |
+| peerings                | List of VPC Peering Connections (see below)   | `list(object)` | []      |
+| ip_ranges               | List of Private Service IP Ranges (see below) | `list(object)` | []      |
+| cloud_routers           | List of Cloud Routers (see below)             | `list(object)` | []      |
+| cloud_nats              | List of Cloud NATs (see below)                | `list(object)` | []      |
 
-## Firewall Rules
+Example:
 
-```
-firewall_rules = {
-  gcp-healthchecks = {
-    priority      = 999
-    source_ranges = ["35.191.0.0/16", "130.211.0.0/22"]
-  }
-}
-```
-
-## Hybrid Connectivity
-### Cloud Routers & Cloud NATs
+```terraform
+vpc_networks = [
+  {
+    name                  = "my-vpc-1"
+    enable_global_routing = true
+  },
+  {
+    name                    = "my-vpc-2"
+    auto_create_subnetworks = true
+  },
+]
 
 ```
-cloud_routers = {
-  cloudrouter-us-east1 = {
-    region = "us-east1"
-    bgp_asn = 65001
-  }
-  cloudrouter-europe-west4 = {
-    region = "europe-west4"
-    bgp_asn = 65004
-  }
-}
-cloud_nats = {
-  us-east1 = {
-    region = "us-east1"
-    cloud_router_name = "cloudrouter-us-east1"
-    num_static_ips = 1
-  }
-  europe-west4 = {
-    region = "europe-west4"
-    cloud_router_name = "cloudrouter-europe-west4"
-  }
-}
 
-```
-### VPC Network Peering
-```
-peerings = {
-  my-peer1 = {
-    peer_project_id      = "some-other-project-id"
-    peer_network_name    = "my-peered-network"
-    import_custom_routes = true
-  }
-  my-peer2 = {
-    peer_project_id      = "some-other-project-id"
-    peer_network_name    = "my-other-peered-network"
-    export_custom_routes = true
-  }
-}
-```
-### VPNs
-```
-peer_vpn_gateways = {
-  office = {
-  }
-}
-cloud_vpn_gateways = {
-  us-east1 = {
-    region = "us-east1"
-  }
-}
-vpns = {
-}
+
+#### subnets
+
+`var.vpc_networks.subnets` is a list of objects.  Attributes are described below
+
+| Name                | Description                                 | Type      | Default  |
+|---------------------|---------------------------------------------|-----------|----------|
+| name                | Subnetwork Name                             | `string`  | n/a      |
+| description         | Subnetwork Description                      | `string`  | null     |
+| region              | GCP Region                                  | `string`  | n/a      |
+| ip_range            | Main IP Range CIDR                          | `string`  | n/a      |
+| purpose             | Subnet Purpose                              | `string`  | PRIVATE  |
+| role                | For Proxy-Only Subnets, the role            | `string`  | ACTIVE   |
+| private_access      | Enable Private Google Access                | `bool`    | false    | 
+| flow_logs           | Enable Flow Logs on this subnet             | `bool`    | false    |
+| service_project_ids | Shared VPC Service Projects list            | `list(string)` | []      |
+| shared_accounts     | Specific accounts to share this subnets to  | `list(string)` | []      |
+
+Examples
+
+```terraform
+    subnets = [
+      {
+        name     = "subnet1"
+        region   = "us-east1"
+        ip_range = "172.29.1.0/24"
+      }
+    ]
 ```
 
-### Private IP Ranges and Private Service Connections
 
-```
-ip_ranges = {
-  servicenetworking = {
-    ip_range = "100.64.64.0/18"
-  }
-}
-service_connections = {
-  service-networking = {
-    ip_ranges = ["servicenetworking"]
-  }
-}
-```
+#### peerings
 
-### Private Service Connects
+`var.vpc_networks.peerings` is a list of objects.  Attributes are described below
 
-```
-private_service_connects = {
-  my-psc = {
-    target      = "projects/some-other-gcp-project/regions/us-east1/serviceAttachments/some-service-name"
-    region      = "us-east1"
-    subnet_name = "default-us-east1"
-    ip_address  = "192.0.2.50"
-  }
-}
-```
+| Name                                | Description                               | Type     | Default   |
+|-------------------------------------|-------------------------------------------|----------|-----------|
+| name                                | Peering Connection Name                   | `string` | n/a       |
+| peer_project_id                     | Project ID of Peer                        | `string` | null      |
+| peer_network_name                   | VPC Network Name in that project          | `string` | n/a       | 
+| peer_network_link                   | Peer Self Link (projects/peer-project...) | `string` | n/a       | 
+| import_custom_routes                |                                           | bool     | false     |
+| export_custom_routes                |                                           | bool     | false     |
+| import_subnet_routes_with_public_ip |                                           | bool     | false     | 
+| export_subnet_routes_with_public_ip |                                           | bool     | false     | 
 
+Examples
+
+```terraform
+  peerings = [
+      {
+        name              = "peering1"
+        peer_project_id   = "other-project"
+        peer_network_name = "other-network"
+      }
+    ]
+```
 ## IMPORT examples
 
-### Import existing subnet called 'test01' in region 'us-central1':
 
 ```
-terraform import -var-file=my_vpc.tfvars 'module.subnets["test01"].google_compute_subnetwork.default' 
-us-central1/test01
 ```
 
-Import existing Private Service Connection
-```
-terraform import 
-'module.private_services[\"servicenetworking-googleapis-com\"].google_service_networking_connection.default' 
-projects/MY_PROJECT/global/networks/MY_NETWORK:servicenetworking.googleapis.com
-```
 
