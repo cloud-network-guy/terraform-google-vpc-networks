@@ -125,6 +125,7 @@ variable "vpc_networks" {
       create          = optional(bool, true)
       project_id      = optional(string)
       host_project_id = optional(string)
+      network         = optional(string)
       name            = optional(string)
       region          = optional(string)
       cidr_range      = optional(string)
@@ -138,6 +139,7 @@ variable "vpc_networks" {
     firewall_rules = optional(list(object({
       create                  = optional(bool, true)
       project_id              = optional(string)
+      network                 = optional(string)
       name                    = optional(string)
       name_prefix             = optional(string)
       short_name              = optional(string)
