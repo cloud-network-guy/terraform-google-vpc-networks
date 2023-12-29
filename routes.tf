@@ -27,10 +27,11 @@ locals {
     # Routes with a single destination range
     [for i, v in local._routes :
       merge(v, {
+        next_hop_type    = lookup(v, "next_hop_gateway", null) != null ? "gateway" : v.next_hop_type
         network          = "${local.url_prefix}/${v.project_id}/global/networks/${v.network}"
-        next_hop_gateway = "${local.url_prefix}/${v.project_id}/global/gateways/${v.next_hop_gateway}"
+        next_hop_gateway = "${local.url_prefix}/${v.project_id}/global/gateways/${coalesce(v.next_hop_gateway, "default-internet-gateway")}"
         index_key        = "${v.project_id}/${v.name}"
-      }) if v.dest_range != null
+      }) if v.dest_range != null && v.create == true
     ]
   ))
 }
@@ -45,7 +46,7 @@ resource "google_compute_route" "default" {
   dest_range             = each.value.dest_range
   priority               = each.value.priority
   tags                   = each.value.tags
-  next_hop_gateway       = each.value.next_hop == null ? "default-internet-gateway" : null
+  next_hop_gateway       = each.value.next_hop_type == "gateway" ? each.value.next_hop_gateway : null
   next_hop_ip            = each.value.next_hop_type == "ip" ? each.value.next_hop : null
   next_hop_instance      = each.value.next_hop_type == "instance" ? each.value.next_hop : null
   next_hop_instance_zone = each.value.next_hop_type == "instance" ? each.value.next_hop_zone : null
