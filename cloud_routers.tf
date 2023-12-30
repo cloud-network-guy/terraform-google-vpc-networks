@@ -2,18 +2,19 @@ locals {
   _cloud_routers = flatten([for vpc_network in local.vpc_networks :
     [for i, v in coalesce(vpc_network.cloud_routers, []) :
       {
-        create                 = coalesce(v.create, true)
-        project_id             = coalesce(v.project_id, vpc_network.project_id, var.project_id)
-        name                   = coalesce(v.name, "rtr-${i}")
-        description            = v.description
-        region                 = coalesce(v.region, var.region)
-        network                = vpc_network.name
-        enable_bgp             = v.enable_bgp
-        bgp_asn                = v.bgp_asn
-        bgp_keepalive_interval = null
-        advertise_mode         = length(coalesce(v.advertised_ip_ranges, [])) > 0 ? "CUSTOM" : "DEFAULT"
-        advertised_groups      = coalesce(v.advertised_groups, [])
-        advertised_ip_ranges   = coalesce(v.advertised_ip_ranges, [])
+        create                        = coalesce(v.create, true)
+        project_id                    = coalesce(v.project_id, vpc_network.project_id, var.project_id)
+        name                          = coalesce(v.name, "rtr-${i}")
+        description                   = v.description
+        region                        = coalesce(v.region, var.region)
+        network                       = vpc_network.name
+        enable_bgp                    = v.enable_bgp
+        bgp_asn                       = v.bgp_asn
+        bgp_keepalive_interval        = null
+        advertise_mode                = length(coalesce(v.advertised_ip_ranges, [])) > 0 ? "CUSTOM" : "DEFAULT"
+        advertised_groups             = coalesce(v.advertised_groups, [])
+        advertised_ip_ranges          = coalesce(v.advertised_ip_ranges, [])
+        encrypted_interconnect_router = coalesce(v.encrypted_interconnect_router, false)
       }
     ]
   ])
@@ -33,12 +34,13 @@ locals {
 
 # Cloud Routers
 resource "google_compute_router" "default" {
-  for_each    = { for k, v in local.cloud_routers : v.index_key => v }
-  project     = each.value.project_id
-  name        = each.value.name
-  description = each.value.description
-  network     = each.value.network
-  region      = each.value.region
+  for_each                      = { for k, v in local.cloud_routers : v.index_key => v }
+  project                       = each.value.project_id
+  name                          = each.value.name
+  description                   = each.value.description
+  network                       = each.value.network
+  region                        = each.value.region
+  encrypted_interconnect_router = each.value.encrypted_interconnect_router
   dynamic "bgp" {
     for_each = each.value.enable_bgp ? [true] : []
     content {
