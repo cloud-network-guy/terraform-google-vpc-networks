@@ -4,13 +4,13 @@ locals {
       merge(v, {
         create               = coalesce(v.create, true)
         project_id           = coalesce(v.project_id, vpc_network.project_id, var.project_id)
-        name                 = coalesce(v.name, "service-networking-${i}")
-        service              = lower(coalesce(v.service, "servicenetworking.googleapis.com"))
+        name                 = lower(trimspace(coalesce(v.name, "service-networking-${i}")))
+        service              = lower(trimspace(coalesce(v.service, "servicenetworking.googleapis.com")))
         network              = google_compute_network.default[vpc_network.index_key].name
         network_id           = google_compute_network.default[vpc_network.index_key].id
         import_custom_routes = coalesce(v.import_custom_routes, false)
         export_custom_routes = coalesce(v.export_custom_routes, false)
-        ip_ranges            = v.ip_ranges
+        ip_ranges            = [for ip_range in v.ip_ranges : lower(trimspace(ip_range))]
       })
     ]
   ])
@@ -18,7 +18,7 @@ locals {
     merge(v, {
       index_key      = "${v.project_id}/${v.network}:${v.service}"
       peering_routes = v.import_custom_routes || v.export_custom_routes ? true : false
-    }) if v.create
+    }) if v.create == true
   ]
 }
 

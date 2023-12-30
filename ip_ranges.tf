@@ -4,7 +4,7 @@ locals {
       {
         create        = coalesce(v.create, true)
         project_id    = coalesce(v.project_id, vpc_network.project_id, var.project_id)
-        name          = coalesce(v.name, "ip-range-${i}")
+        name          = lower(trimspace(coalesce(v.name, "ip-range-${i}")))
         description   = v.description
         ip_version    = null
         address       = element(split("/", v.ip_range), 0)

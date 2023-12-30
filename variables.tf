@@ -10,15 +10,16 @@ variable "region" {
 }
 variable "vpc_networks" {
   type = list(object({
-    create                  = optional(bool, true)
-    project_id              = optional(string)
-    name                    = string
-    description             = optional(string)
-    mtu                     = optional(number)
-    enable_global_routing   = optional(bool)
-    auto_create_subnetworks = optional(bool)
-    attached_projects       = optional(list(string))
-    shared_accounts         = optional(list(string))
+    create                   = optional(bool, true)
+    project_id               = optional(string)
+    name                     = string
+    description              = optional(string)
+    mtu                      = optional(number)
+    enable_global_routing    = optional(bool)
+    auto_create_subnetworks  = optional(bool)
+    enable_ula_internal_ipv6 = optional(bool)
+    attached_projects        = optional(list(string))
+    shared_accounts          = optional(list(string))
     subnets = optional(list(object({
       create                   = optional(bool, true)
       project_id               = optional(string)
