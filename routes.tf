@@ -5,7 +5,7 @@ locals {
         create        = coalesce(v.create, true)
         project_id    = coalesce(v.project_id, vpc_network.project_id, var.project_id)
         name          = lower(trimspace(replace(coalesce(v.name, "route-${i}"), "_", "-")))
-        next_hop_type = can(regex("^[1-2]", v.next_hop)) ? "ip" : "instance"
+        next_hop_type = can(regex("^[1-2]", v.next_hop)) ? "ip" : (endswith(v.next_hop, "gateway") ? "gateway" : "instance")
         network       = vpc_network.name
         dest_range    = v.dest_range
         dest_ranges   = coalesce(v.dest_ranges, [])
@@ -27,7 +27,7 @@ locals {
     # Routes with a single destination range
     [for i, v in local._routes :
       merge(v, {
-        next_hop_type    = lookup(v, "next_hop_gateway", null) != null ? "gateway" : v.next_hop_type
+        next_hop_type    = v.next_hop_gateway != null ? "gateway" : v.next_hop_type
         network          = "${local.url_prefix}/${v.project_id}/global/networks/${v.network}"
         next_hop_gateway = "${local.url_prefix}/${v.project_id}/global/gateways/${coalesce(v.next_hop_gateway, "default-internet-gateway")}"
         index_key        = "${v.project_id}/${v.name}"
