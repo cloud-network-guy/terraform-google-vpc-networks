@@ -14,7 +14,7 @@ locals {
         advertise_mode                = length(coalesce(v.advertised_ip_ranges, [])) > 0 ? "CUSTOM" : "DEFAULT"
         advertised_groups             = coalesce(v.advertised_groups, [])
         advertised_ip_ranges          = coalesce(v.advertised_ip_ranges, [])
-        encrypted_interconnect_router = v.encrypted_interconnect_router
+        encrypted_interconnect_router = coalesce(v.encrypted_interconnect_router, false)
       }
     ]
   ])
