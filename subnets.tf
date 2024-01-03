@@ -6,7 +6,7 @@ locals {
         project_id           = coalesce(v.project_id, vpc_network.project_id, var.project_id)
         name                 = lower(trimspace(coalesce(v.name, "subnet-${i}")))
         network              = google_compute_network.default[vpc_network.index_key].name
-        purpose              = upper(coalesce(v.purpose, "PRIVATE"))
+        purpose              = upper(trimspace(coalesce(v.purpose, "PRIVATE")))
         region               = coalesce(v.region, var.region)
         private_access       = coalesce(v.private_access, var.defaults.subnet_private_access, false)
         aggregation_interval = upper(coalesce(v.log_aggregation_interval, var.defaults.subnet_log_aggregation_interval, "INTERVAL_5_SEC"))
@@ -29,9 +29,8 @@ locals {
     merge(v, {
       index_key            = "${v.project_id}/${v.region}/${v.name}"
       is_private           = v.purpose == "PRIVATE" ? true : false
-      is_proxy_only        = contains(["INTERNAL_HTTPS_LOAD_BALANCER", "REGIONAL_MANAGED_PROXY"], v.purpose) ? true : false
+      is_proxy_only        = v.purpose == "INTERNAL_HTTPS_LOAD_BALANCER" || endswith(v.purpose, "MANAGED_PROXY") ? true : false
       has_secondary_ranges = length(v.secondary_ranges) > 0 ? true : false
-
     }) if v.create == true
   ]
 }
