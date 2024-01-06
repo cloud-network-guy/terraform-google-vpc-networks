@@ -27,10 +27,11 @@ locals {
   ])
   subnets = [for i, v in local._subnets :
     merge(v, {
-      index_key            = "${v.project_id}/${v.region}/${v.name}"
       is_private           = v.purpose == "PRIVATE" ? true : false
       is_proxy_only        = v.purpose == "INTERNAL_HTTPS_LOAD_BALANCER" || endswith(v.purpose, "MANAGED_PROXY") ? true : false
       has_secondary_ranges = length(v.secondary_ranges) > 0 ? true : false
+      network              = "${local.url_prefix}/${v.project_id}/global/networks/${v.network}"
+      index_key            = "${v.project_id}/${v.region}/${v.name}"
     }) if v.create == true
   ]
 }
