@@ -20,25 +20,39 @@ locals {
   }
   # Create a list of objects for all subnets that are shared
   shared_subnets = flatten([for k, v in local.subnets :
-    {
-      subnet_key        = v.index_key
-      subnet_project_id = v.project_id
-      subnet_region     = v.region
-      subnet_id         = "projects/${v.project_id}/regions/${v.region}/subnetworks/${v.name}"
-      members = toset(flatten(concat([
-        for i, service_project_id in v.attached_projects : lookup(local.compute_sa_accounts, service_project_id, [])
-      ], v.shared_accounts)))
-    } if length(v.attached_projects) > 0 || length(v.shared_accounts) > 0 && !v.is_proxy_only
+    concat(
+      length(v.attached_projects) > 0 || length(v.shared_accounts) > 0 && !v.is_proxy_only ? [
+        {
+          subnet_key = v.index_key
+          project_id = v.project_id
+          region     = v.region
+          subnetwork = "projects/${v.project_id}/regions/${v.region}/subnetworks/${v.name}"
+          role       = "roles/compute.networkUser"
+          members = toset(flatten(concat([
+            for i, service_project_id in v.attached_projects : lookup(local.compute_sa_accounts, service_project_id, [])
+          ], v.shared_accounts)))
+      }] : [],
+      length(v.viewer_accounts) > 0 && !v.is_proxy_only ? [
+        {
+          subnet_key = v.index_key
+          project_id = v.project_id
+          region     = v.region
+          subnetwork = "projects/${v.project_id}/regions/${v.region}/subnetworks/${v.name}"
+          role       = "roles/compute.networkViewer"
+          members    = toset(v.viewer_accounts)
+        }
+      ] : []
+    )
   ])
 }
 
 # Give Compute Network User permissions on the subnet to the applicable accounts
 resource "google_compute_subnetwork_iam_binding" "default" {
   for_each   = { for i, v in local.shared_subnets : v.subnet_key => v }
-  project    = each.value.subnet_project_id
-  region     = each.value.subnet_region
+  project    = each.value.project_id
+  region     = each.value.region
   subnetwork = each.value.subnet_id
-  role       = "roles/compute.networkUser"
+  role       = each.value.role
   members    = each.value.members
   depends_on = [google_compute_subnetwork.default]
 }

@@ -20,6 +20,7 @@ variable "vpc_networks" {
     enable_ula_internal_ipv6 = optional(bool)
     attached_projects        = optional(list(string))
     shared_accounts          = optional(list(string))
+    viewer_accounts          = optional(list(string))
     subnets = optional(list(object({
       create                   = optional(bool, true)
       project_id               = optional(string)
@@ -36,6 +37,7 @@ variable "vpc_networks" {
       log_sampling_rate        = optional(number)
       attached_projects        = optional(list(string))
       shared_accounts          = optional(list(string))
+      viewer_accounts          = optional(list(string))
       secondary_ranges = optional(list(object({
         name  = optional(string)
         range = string

@@ -16,6 +16,7 @@ locals {
         stack_type           = upper(coalesce(v.stack_type, var.defaults.subnet_stack_type, "IPV4_ONLY"))
         attached_projects    = concat(coalesce(v.attached_projects, []), coalesce(vpc_network.attached_projects, []))
         shared_accounts      = concat(coalesce(v.shared_accounts, []), coalesce(vpc_network.shared_accounts, []))
+        viewer_accounts      = concat(coalesce(v.viewer_accounts, []), coalesce(vpc_network.viewer_accounts, []))
         secondary_ranges = [for i, r in coalesce(v.secondary_ranges, []) :
           {
             name  = trimspace(coalesce(r.name, "secondary-range-${i}"))
