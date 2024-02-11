@@ -29,7 +29,7 @@ locals {
       members = toset(flatten(concat([
         for i, service_project_id in v.attached_projects : lookup(local.compute_sa_accounts, service_project_id, [])
       ], v.shared_accounts)))
-    } if length(v.attached_projects) > 0 || length(v.shared_accounts) > 0 && !v.is_proxy_only
+    } if length(v.attached_projects) > 0 || length(v.shared_accounts) > 0 && v.is_private
   ])
   # Same for viewer
   viewable_subnets = flatten([for k, v in local.subnets :
@@ -40,7 +40,7 @@ locals {
       subnetwork = "projects/${v.project_id}/regions/${v.region}/subnetworks/${v.name}"
       role       = "roles/compute.networkViewer"
       members    = toset(v.viewer_accounts)
-    } if length(v.viewer_accounts) > 0 && !v.is_proxy_only
+    } if length(v.viewer_accounts) > 0 && v.is_private
   ])
 }
 
