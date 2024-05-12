@@ -26,7 +26,7 @@ locals {
     # Routes with a single destination range
     [for i, v in local._routes :
       merge(v, {
-        name = replace(replace(coalesce(v.name, replace(v.dest_range, ".", "-")), "/", "-"), "_", "-")
+        name = replace(coalesce(v.name, replace(v.dest_range, ".", "-")), "/", "-")
       }) if v.dest_range != null
     ]
   ))
