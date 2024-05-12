@@ -4,7 +4,7 @@ locals {
       merge(v, {
         create      = coalesce(v.create, true)
         project_id  = coalesce(v.project_id, vpc_network.project_id, var.project_id)
-        name        = lower(trimspace(replace(coalesce(v.name, "route-${i}"), "_", "-")))
+        name        = lower(trimspace(replace(replace(coalesce(v.name, replace(v.dest_range, ".", "-")), "/", "-"), "_", "-")))
         next_hop    = coalesce(v.next_hop, "default-internet-gateway")
         network     = vpc_network.name
         dest_range  = v.dest_range
@@ -18,7 +18,7 @@ locals {
       # Routes that have more than one destination range
       [for i, dest_range in route.dest_ranges :
         merge(route, {
-          name       = "${route.name}-${replace(replace(dest_range, ".", "-"), "/", "-")}"
+          name       = "${route.name}-${replace(replace(dest_range, ".", "-"), "/", "-")}-${route.priority}"
           dest_range = dest_range
         })
       ]
