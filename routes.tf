@@ -18,7 +18,7 @@ locals {
       # Routes that have more than one destination range
       [for i, dest_range in route.dest_ranges :
         merge(route, {
-          name       = "${route.name}-${i}"
+          name       = "${route.name}-${replace(replace(dest_range, ".", "-"), "/", "-")}"
           dest_range = dest_range
         })
       ]
