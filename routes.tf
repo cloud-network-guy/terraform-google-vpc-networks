@@ -4,7 +4,7 @@ locals {
       merge(v, {
         create      = coalesce(v.create, true)
         project_id  = coalesce(v.project_id, vpc_network.project_id, var.project_id)
-        name        = lower(trimspace(replace(replace(coalesce(v.name, replace(v.dest_range, ".", "-")), "/", "-"), "_", "-")))
+        name        = v.name != null ? lower(trimspace(v.name)) : null
         next_hop    = coalesce(v.next_hop, "default-internet-gateway")
         network     = vpc_network.name
         dest_range  = v.dest_range
@@ -26,6 +26,7 @@ locals {
     # Routes with a single destination range
     [for i, v in local._routes :
       merge(v, {
+        name = replace(replace(coalesce(v.name, replace(v.dest_range, ".", "-")), "/", "-"), "_", "-")
       }) if v.dest_range != null
     ]
   ))
