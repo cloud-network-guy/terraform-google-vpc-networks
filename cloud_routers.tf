@@ -1,4 +1,4 @@
-git statlocals {
+locals {
   _cloud_routers = flatten([for vpc_network in local.vpc_networks :
     [for i, v in coalesce(vpc_network.cloud_routers, []) :
       {
