@@ -1,6 +1,6 @@
 locals {
   # Create list of all service project IDs being shared to
-  service_project_ids = flatten([for i, v in local.subnets : v.attached_projects])
+  service_project_ids = flatten([for i, v in local.subnets : lower(trimspace(v.attached_projects))])
 }
 
 # Retrieve project information for all service projects, given project ID
