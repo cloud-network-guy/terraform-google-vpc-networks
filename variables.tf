@@ -42,6 +42,13 @@ variable "vpc_networks" {
         name  = optional(string)
         range = string
       })))
+      psc_endpoints = optional(list(object({
+        project_id  = optional(string)
+        name        = optional(string)
+        description = optional(string)
+        address     = optional(string)
+        target      = string
+      })))
     })))
     routes = optional(list(object({
       create            = optional(bool, true)

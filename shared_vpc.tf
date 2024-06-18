@@ -1,22 +1,43 @@
 locals {
   # Create list of all service project IDs being shared to
-  service_project_ids = flatten([for i, v in local.subnets : v.attached_projects])
+  service_project_ids = toset(flatten([for i, v in local.subnets : v.attached_projects]))
 }
 
 # Retrieve project information for all service projects, given project ID
 data "google_project" "service_projects" {
-  for_each   = toset(local.service_project_ids)
+  for_each   = local.service_project_ids
   project_id = each.value
 }
 
+# Configure Asset Resource Manage to use Host VPC as quota/billing project
+provider "google-beta" {
+  user_project_override = true
+  billing_project       = coalesce(var.vpc_networks[0].project_id, var.project_id)
+}
+
+# Retrieve enabled services (APIs) for all service projects, given project ID
+data "google_cloud_asset_resources_search_all" "services" {
+  for_each    = local.service_project_ids
+  scope       = "projects/${each.value}"
+  asset_types = ["serviceusage.googleapis.com/Service"]
+  provider    = google-beta
+}
+
 locals {
-  # Form Map of keyed by Project ID with list of relevant compute service accounts
-  compute_sa_accounts = { for project in data.google_project.service_projects :
-    project.project_id => [
-      "serviceAccount:${project.number}-compute@developer.gserviceaccount.com",
-      "serviceAccount:${project.number}@cloudservices.gserviceaccount.com",
-      # GKE = "serviceAccount:service-${project.number}@container-engine-robot.iam.gserviceaccount.com",
-    ]
+  # Form Map of keyed by Project ID with Project Number & list of enabled services (APIs)
+  projects = { for project_id in local.service_project_ids :
+    project_id => {
+      number = data.google_project.service_projects[project_id].number
+      apis   = toset(compact([for _ in data.google_cloud_asset_resources_search_all.services[project_id].results : lookup(_, "display_name", null)]))
+    }
+  }
+  # For each Project ID, create a list of service accounts needing compute.networkUser permissions
+  service_accounts = { for k, v in local.projects :
+    k => compact([
+      contains(v.apis, "compute.googleapis.com") ? "serviceAccount:${v.number}@cloudservices.gserviceaccount.com" : null,
+      contains(v.apis, "compute.googleapis.com") ? "serviceAccount:${v.number}-compute@developer.gserviceaccount.com" : null,
+      contains(v.apis, "container.googleapis.com") ? "serviceAccount:service-${v.number}@container-engine-robot.iam.gserviceaccount.com" : null,
+    ])
   }
   # Create a list of objects for all subnets that are shared
   shared_subnets = flatten([for k, v in local.subnets :
@@ -27,7 +48,7 @@ locals {
       subnetwork = "projects/${v.project_id}/regions/${v.region}/subnetworks/${v.name}"
       role       = "roles/compute.networkUser"
       members = toset(flatten(concat([
-        for i, service_project_id in v.attached_projects : lookup(local.compute_sa_accounts, service_project_id, [])
+        for i, service_project_id in v.attached_projects : lookup(local.service_accounts, service_project_id, [])
       ], v.shared_accounts)))
     } if length(v.attached_projects) > 0 || length(v.shared_accounts) > 0 && v.is_private
   ])

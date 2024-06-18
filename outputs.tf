@@ -36,3 +36,5 @@ output "vpc_networks" {
     }
   ]
 }
+#output "projects" { value = local.projects }
+#output "service_accounts" { value = local.service_accounts }

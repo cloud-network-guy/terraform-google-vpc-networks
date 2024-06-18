@@ -23,6 +23,7 @@ locals {
             range = r.range
           }
         ]
+        psc_endpoints = coalesce(v.psc_endpoints, [])
       })
     ]
   ])
